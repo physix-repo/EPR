@@ -1,12 +1,16 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import gaussian_kde
+import scipy.integrate as integrate
 import os
 
 # ==========================================
 # 1. Load the Saved Data
 # ==========================================
-filename = '/home/sorbonne/ProductionEntropy/1DDoubleWell/data/block_averaged_1D_binning_20k_20_blocks_biased_results.npz'
+method = 'biased'
+ntraj = 20000
+n_blocks = 20
+filename = f'block_averaged_1D_{ntraj}_ntraj_{n_blocks}_blocks_{method}_results.npz'
 
 if not os.path.exists(filename):
     print(f"Error: The file '{filename}' was not found in the current directory.")
@@ -31,11 +35,12 @@ Sdots_std = data['Sdots_std']
 
 # Helper for theoretical distribution
 sigma_start = np.sqrt(2.0 * D * dt)
-Z_norm = data['Z_norm']
 Z_end = data['Z_end']
 
 def boltzmann_factor(x):
     return np.exp(-A * (x**2 - 1.0)**2 / D)
+
+Z_norm, _ = integrate.quad(boltzmann_factor, -np.inf, np.inf)
 
 # ==========================================
 # 2. PRL PUBLICATION PLOTTING STANDARDS (2x1 Stack)
@@ -129,9 +134,3 @@ fig.align_ylabels([ax1, ax_sdot])
 # Adjust layout so subplots don't overlap
 fig.tight_layout(pad=0, h_pad=-1)
 plt.show()
-
-# Save the combined figure
-os.makedirs('./1DDoubleWell', exist_ok=True)
-fig.savefig('./1DDoubleWell/figs/Two_Figure_PRL.png', dpi=600, bbox_inches='tight')
-
-print("Combined PRL figure saved to './1DDoubleWell/Two_Figure_PRL.png'")
