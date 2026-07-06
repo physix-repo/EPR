@@ -161,11 +161,11 @@ if __name__ == "__main__":
     Sdots = [Sdots_EPR[deg] for deg in angles_deg]
 
     print(f"\nTime: {time.time()-t0:.1f}s")
-    print("\n--- Thermodynamic Trifecta Ledger ---")
-    print(f"  Macrostate Delta F (X):      {Delta_F_X_macro:.3f} kT")
-    print(f"  Macrostate Delta F (Y):      {Delta_F_Y_macro:.3f} kT")
+    print("\n--- Direct estimation Free energy ---")
+    print(f"  Direct Delta F (X):      {Delta_F_X_macro:.3f} kT")
+    print(f"  Direct Delta F (Y):      {Delta_F_Y_macro:.3f} kT")
     print("-----------------------------------")
-    print(f"  Macrostate Delta F (2D):  {Delta_F_2D_macro:.3f} kT")
+    print(f"  Direct Delta F (2D):  {Delta_F_2D_macro:.3f} kT")
 
     # ==========================================
     # 3. Save Data
