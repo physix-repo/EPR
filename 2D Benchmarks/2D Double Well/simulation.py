@@ -56,12 +56,12 @@ if __name__ == "__main__":
     Y_start, Y_end = Y_master[:, 1], Y_master[:, -1]
 
     # ----------------------------------------------------
-    # 1. Calculate Macrostate Free Energy (Delta F)
+    # 1.Direct estimation (Delta F)
     # ----------------------------------------------------
     print("Computing Macrostate Free Energy Drops (X, Y, and 2D)...")
     bins_thermo = int(np.sqrt(ntraj))
 
-    # --- A. 1D X-Axis Macrostate ---
+    # --- A. 1D X-Axis ---
     x_min = min(np.min(X_start), np.min(X_end)) - 1.0
     x_max = max(np.max(X_start), np.max(X_end)) + 1.0
     rho_x_start, x_edges = np.histogram(X_start, bins=bins_thermo, range=(x_min, x_max), density=True)
@@ -74,7 +74,7 @@ if __name__ == "__main__":
     F_x_end, U_x_end, S_x_end = compute_macrostate_free_energy(rho_x_end, V_x, dx)
     Delta_F_X_macro = F_x_start - F_x_end
 
-    # --- B. 1D Y-Axis Macrostate ---
+    # --- B. 1D Y-Axis ---
     y_min = min(np.min(Y_start), np.min(Y_end)) - 1.0
     y_max = max(np.max(Y_start), np.max(Y_end)) + 1.0
     rho_y_start, y_edges = np.histogram(Y_start, bins=bins_thermo, range=(y_min, y_max), density=True)
@@ -122,7 +122,7 @@ if __name__ == "__main__":
     Delta_F_2D_macro = F_2d_start - F_2d_end
 
     # ----------------------------------------------------
-    # 2. Block Averaging Engine (1D Projections only)
+    # 2. EPR Block average
     # ----------------------------------------------------
     print(f"Computing Block-Averaged 1D EPR projections ({n_blocks} blocks of {ntraj//n_blocks} trajectories)...")
     X_blocks = np.array_split(X_master, n_blocks, axis=0)
@@ -155,7 +155,7 @@ if __name__ == "__main__":
                 Stot_EPR_1D_blocks[deg].append(np.trapezoid(Sdots_1d - baseline_1d, taus_1d))
                 Sdots_EPR[deg].append(Sdots_1d)
             
-    # Calculate Statistical Means and Errors for Projections
+    # Calculate Statistical Means and Errors
     Integrated_Stot_1D_Means = [np.mean(Stot_EPR_1D_blocks[deg]) for deg in angles_deg]
     Integrated_Stot_1D_Errs = [np.std(Stot_EPR_1D_blocks[deg]) / np.sqrt(n_blocks) for deg in angles_deg]
     Sdots = [Sdots_EPR[deg] for deg in angles_deg]
