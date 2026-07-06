@@ -158,7 +158,7 @@ a, b = 8, 40.0
 # 4. ROW 1: QUARTIC 2D 
 # ==========================================
 # Load Data
-res_quartic = np.loadtxt('/home/sorbonne/ProductionEntropy/QuarticDoubleWell/data/sol_ongrid.dat')[:, 2].reshape((ngrid, ngrid))
+res_quartic = np.loadtxt('./2D Double Well/data/sol_ongrid.dat')[:, 2].reshape((ngrid, ngrid))
 eps_quartic = res_quartic[res_quartic > 0].min() / 1e2
 
 def quartic_eval(x, y):
@@ -184,9 +184,9 @@ ax_q_pot.text(-0.15, 1.1, '(a)', transform=ax_q_pot.transAxes, fontsize=FONT_PAN
 # Panel (b): Quartic EPR
 ntraj = 20000
 n_blocks = 20
-filename_q_results = f'./2D_Double_Well/2D_quartic_results_{int(ntraj//1000)}k_ntraj_{n_blocks}_blocks_biased.npz'
+filename_q_results = f'./2D Double Well/2D_quartic_results_{int(ntraj//1000)}k_ntraj_{n_blocks}_blocks_biased.npz'
 data_q = np.load(filename_q_results)
-data_q_rss = np.load('/home/sorbonne/ProductionEntropy/QuarticDoubleWell/data/rss_committor_results.npz')
+data_q_rss = np.load('./2D Double Well/rss_committor_results.npz')
 
 angles_deg = data_q['angles_deg']
 Delta_F_X_macro = data_q['Delta_F_X_macro']
@@ -229,7 +229,7 @@ ax_q_epr.text(-0.15, 1.1, '(b)', transform=ax_q_epr.transAxes, fontsize=FONT_PAN
 # 5. ROW 2: S-SHAPE (Tunnel) 
 # ==========================================
 # Load Data
-res_sshape = np.loadtxt('/home/sorbonne/ProductionEntropy/Spotential/data/sol_ongrid.dat')[:, 2].reshape((ngrid, ngrid))
+res_sshape = np.loadtxt('./N shape/sol_ongrid.dat')[:, 2].reshape((ngrid, ngrid))
 eps_sshape = res_sshape[res_sshape > 0].min()
 
 def sshape_eval(x, y):
@@ -295,8 +295,7 @@ ax_s_epr.text(-0.15, 1.1, '(d)', transform=ax_s_epr.transAxes, fontsize=FONT_PAN
 fig.tight_layout(pad=0.2, w_pad=0, h_pad=-1)
 
 # Ensure the subdirectories exist or save it to the current root directory
-os.makedirs('./CombinedPlots', exist_ok=True)
-fig.savefig('./CombinedPlots/Combined_Quartic_Sshape_PRL.png', dpi=600, bbox_inches='tight')
+fig.savefig('./Combined_Quartic_Sshape_PRL.png', dpi=600, bbox_inches='tight')
 
 plt.show()
 
