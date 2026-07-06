@@ -266,7 +266,7 @@ if __name__ == "__main__":
     Path_E = [np.std(Stot_PathCV_blocks[n])/np.sqrt(n_blocks) for n in path_nodes_list]
     Sdots_P = [Sdots_PathCV_blocks[n] for n in path_nodes_list]
 
-    print(f"\n--- Results Ledger ({time.time()-t0:.1f}s) ---")
+    print(f"\n--- Results ({time.time()-t0:.1f}s) ---")
     print(f"  Macrostate Delta F (2D GMM): {Delta_F_2D_macro:.3f} kT")
     print(f"  True Committor CV EPR:       {Comm_M:.3f} +/- {Comm_E:.3f} kT")
 
