@@ -142,54 +142,9 @@ def get_committor_cv(X, Y, grid_array, x_lin, y_lin, use_logit_transform=True):
         return np.log(q_prob / (1.0 - q_prob))
     else:
         return q_prob
-# ==========================================
-# 3. Thermodynamic Estimators
-# ==========================================
-
-def compute_thermodynamics_2d(X_b, Y_b, A, K, D, dt):
-    X_start, Y_start = X_b[:, 1], Y_b[:, 1]
-    X_end, Y_end = X_b[:, -1], Y_b[:, -1]
-    sigma_start = np.sqrt(2.0 * D * dt)
-    ln_rho_start = -np.log(2.0 * np.pi * sigma_start**2) - (X_start**2 + Y_start**2) / (2.0 * sigma_start**2)
-    
-    try:
-        kde_end = gaussian_kde(np.vstack([X_end, Y_end]))
-        ln_rho_end = np.log(kde_end(np.vstack([X_end, Y_end])) + 1e-12)
-    except Exception:
-        ln_rho_end = np.zeros_like(X_end)
-        
-    Delta_S = ln_rho_start - ln_rho_end
-    V_start = A * (X_start**2 - 1.0)**2 + 0.5 * K * (Y_start - np.sin(np.pi*(X_start+1)))**2
-    V_end = A * (X_end**2 - 1.0)**2 + 0.5 * K * (Y_end - np.sin(np.pi*(X_end+1)))**2
-    return np.mean((V_start - V_end) / D + Delta_S)
-
-def compute_thermodynamics_2d_GMM(X_b, Y_b, A, K, D, dt):
-    """Computes empirical Stot = Q + dS from the 2D trajectory endpoints via KDE."""
-    X_start, Y_start = X_b[:, 1], Y_b[:, 1]
-    X_end, Y_end = X_b[:, -1], Y_b[:, -1]
-    
-    sigma_start = np.sqrt(2.0 * D * dt)
-    
-    # EXACT Initial Entropy (Evaluated at t=dt for a 2D Isotropic Gaussian)
-    ln_rho_start = -np.log(2.0 * np.pi * sigma_start**2) - (X_start**2 + Y_start**2) / (2.0 * sigma_start**2)
-    
-    data = np.column_stack((X_end, Y_end))
-    gmm = GaussianMixture(n_components=2, covariance_type='full', random_state=42)
-    gmm.fit(data)
-    ln_rho_end_gmm = gmm.score_samples(data)
-        
-    Delta_S = ln_rho_start - ln_rho_end_gmm
-    
-    # Updated V_start and V_end calculation for sinusoidal potential
-    V_start = A * (X_start**2 - 1.0)**2 + 0.5 * K * (Y_start - np.sin(np.pi * (X_start + 1.0)))**2
-    V_end = A * (X_end**2 - 1.0)**2 + 0.5 * K * (Y_end - np.sin(np.pi * (X_end + 1.0)))**2
-    Q = (V_start - V_end) / D
-    
-    return np.mean(Q + Delta_S)
-
 
 # ==========================================
-# 4. Execution & Block Averaging
+# 3. Execution & Block Averaging
 # ==========================================
 
 if __name__ == "__main__":
@@ -205,7 +160,7 @@ if __name__ == "__main__":
     
     path_nodes_list = [2, 4, 6, 16]
     
-    grid_array, x_lin, y_lin = load_committor_grid('/home/sorbonne/ProductionEntropy/Spotential/data/sol_ongrid.dat')
+    grid_array, x_lin, y_lin = load_committor_grid('./sol_ongrid.dat')
 
     print(f"\n--- Simulating Coupled Sinusoidal Landscape (A={A}, K={K}) ---")
     t0 = time.time()
@@ -215,9 +170,9 @@ if __name__ == "__main__":
     Y_start, Y_end = Y_master[:, 1], Y_master[:, -1]
 
     # ----------------------------------------------------
-    # Calculate Macrostate Free Energy (Delta F) in 2D
+    # Direct estimation Free energy
     # ----------------------------------------------------
-    print("Computing Macrostate Free Energy Drop (2D GMM)...")
+    print("Computing Free Energy Drop (2D GMM)...")
     
     x_min = min(np.min(X_start), np.min(X_end)) - 1.0
     x_max = max(np.max(X_start), np.max(X_end)) + 1.0
@@ -258,7 +213,7 @@ if __name__ == "__main__":
     Delta_F_2D_macro = F_2d_start - F_2d_end
 
     # ----------------------------------------------------
-    # Block Averaging Engine (CV EPR estimations)
+    # EPR estimation
     # ----------------------------------------------------
     print(f"\nComputing Block-Averaged 1D EPR projections ({n_blocks} blocks of {ntraj//n_blocks} trajectories)...")
     X_blocks = np.array_split(X_master, n_blocks, axis=0)
@@ -284,7 +239,7 @@ if __name__ == "__main__":
             Sdots_c, taus_c = EPR(Z_comm[:, ::stride, :], dt*stride, bins=int(np.sqrt(ntraj//n_blocks)))
             Stot_Committor_blocks.append(np.trapezoid(Sdots_c - np.mean(Sdots_c[-int(nsteps*0.1/stride):]), taus_c))
         else:
-            Sdots_c, taus_c = EPR(Z_comm, dt, bins=int(np.sqrt(ntraj//n_blocks)), method=method)
+            Sdots_c, taus_c = EPR(Z_comm[:, ::stride, :], dt*stride, bins=int(np.sqrt(ntraj//n_blocks)), method=method)
             Stot_Committor_blocks.append(np.trapezoid(Sdots_c, taus_c))
             
         Sdots_Committor_blocks.append(Sdots_c)
@@ -300,7 +255,7 @@ if __name__ == "__main__":
                 Sdots_p, taus_p = EPR(Z_path[:, ::stride, :], dt*stride, bins=int(np.sqrt(ntraj//n_blocks)))
                 Stot_PathCV_blocks[n_nodes].append(np.trapezoid(Sdots_p - np.mean(Sdots_p[-int(nsteps*0.1/stride):]), taus_p))
             else:
-                Sdots_p, taus_p = EPR(Z_path, dt, bins=int(np.sqrt(ntraj//n_blocks)), method=method)
+                Sdots_p, taus_p = EPR(Z_path[:, ::stride, :], dt*stride, bins=int(np.sqrt(ntraj//n_blocks)), method=method)
                 Stot_PathCV_blocks[n_nodes].append(np.trapezoid(Sdots_p, taus_p))
                 
             Sdots_PathCV_blocks[n_nodes].append(Sdots_p)
@@ -326,28 +281,3 @@ if __name__ == "__main__":
         Delta_F_2D_macro=Delta_F_2D_macro,
         Sdots_C=Sdots_Committor_blocks, Comm_M=Comm_M, Comm_E=Comm_E
     )
-        
-    
-    fig, ax = plt.subplots(figsize=(10, 6))
-    
-    # Theoretical Ceilings
-    ax.axhline(Delta_F_2D_macro, color='tab:green', linestyle='--', lw=2, label=r'Macrostate $\Delta F$ (2D GMM)')
-    
-    # Committor Reference
-    ax.axhline(Comm_M, color='tab:orange', linestyle=':', lw=2, label=r'True Committor CV $S_{tot}$')
-    ax.fill_between([min(path_nodes_list)-10, max(path_nodes_list)+10], Comm_M - Comm_E, Comm_M + Comm_E, color='tab:orange', alpha=0.15)
-    
-    # Path CV Scatter
-    ax.errorbar(path_nodes_list, Path_M, yerr=Path_E, fmt='o-', capsize=5, color='purple', markersize=8, lw=2, label=r'Path CV $S_{tot}$ (Varying Nodes)')
-    
-    ax.set_title('Path CV vs True Committor in Coupled Sinusoidal Landscape', fontsize=14, pad=15)
-    ax.set_xlabel('Number of String Nodes (Path Resolution)', fontsize=12)
-    ax.set_ylabel(r'Entropy Production ($k_B T$)', fontsize=12)
-    ax.grid(True, linestyle='--', alpha=0.5)
-    ax.legend(loc='lower right')
-    ax.set_xticks(path_nodes_list)
-    ax.set_xticklabels(path_nodes_list)
-    ax.set_xlim(min(path_nodes_list)-1, max(path_nodes_list)*1.1)
-    
-    plt.tight_layout()
-    plt.show()
