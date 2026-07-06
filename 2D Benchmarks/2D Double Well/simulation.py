@@ -9,7 +9,7 @@ from sklearn.mixture import GaussianMixture
 
 # 1. Dynamically add the parent directory to Python's path
 current_dir = os.path.dirname(os.path.abspath(__file__))
-parent_dir = os.path.abspath(os.path.join(current_dir, '..'))
+parent_dir = os.path.abspath(os.path.join(current_dir, '..', '..'))
 sys.path.append(parent_dir)
 
 # 2. Now use an absolute import instead of a relative one
